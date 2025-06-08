@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Time Traveller</title>
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+  <div id="app">
+    <div id="start-screen">
+      <h1 class="animated-title">🕰️ Time Traveller</h1>
+      <button onclick="startGame()">Start</button>
+      <button onclick="continueGame()">Continue</button>
+      <button onclick="showOptions()">Options</button>
+    </div>
+
+    <!-- Time Challenge Section -->
+    <div style="text-align:center; margin-top: 30px;">
+      <h2 id="time-question">Loading...</h2>
+      <canvas id="clockCanvas" width="300" height="300"></canvas>
+      <br />
+      <button id="check-button">Check</button>
+    </div>
+  </div>
+
+  <!-- Load modules -->
+  <script type="module">
+    import './scripts/uiHandler.js';
+    import './scripts/gameLogic.js';
+  </script>
+</body>
+</html>
