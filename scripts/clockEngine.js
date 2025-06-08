@@ -25,13 +25,13 @@ export class AnalogueClock {
   }
 
   drawFace() {
-    let ctx = this.ctx;
+    const ctx = this.ctx;
     ctx.beginPath();
     ctx.arc(0, 0, this.radius, 0, 2 * Math.PI);
     ctx.fillStyle = 'white';
     ctx.fill();
 
-    let grad = ctx.createRadialGradient(0, 0, this.radius * 0.95, 0, 0, this.radius * 1.05);
+    const grad = ctx.createRadialGradient(0, 0, this.radius * 0.95, 0, 0, this.radius * 1.05);
     grad.addColorStop(0, '#333');
     grad.addColorStop(0.5, 'white');
     grad.addColorStop(1, '#333');
@@ -46,14 +46,12 @@ export class AnalogueClock {
   }
 
   drawNumbers() {
-    let ang;
-    let num;
-    let ctx = this.ctx;
+    const ctx = this.ctx;
     ctx.font = this.radius * 0.15 + "px arial";
     ctx.textBaseline = "middle";
     ctx.textAlign = "center";
-    for (num = 1; num <= 12; num++) {
-      ang = num * Math.PI / 6;
+    for (let num = 1; num <= 12; num++) {
+      const ang = num * Math.PI / 6;
       ctx.rotate(ang);
       ctx.translate(0, -this.radius * 0.85);
       ctx.rotate(-ang);
@@ -65,15 +63,14 @@ export class AnalogueClock {
   }
 
   drawTime() {
-    let hour = this.hour % 12;
-    hour = (hour * Math.PI / 6) + (this.minute * Math.PI / (6 * 60));
-    this.drawHand(hour, this.radius * 0.5, this.radius * 0.07, 'hour');
-    let minuteAngle = (this.minute * Math.PI / 30);
+    const hourAngle = ((this.hour % 12) * Math.PI / 6) + (this.minute * Math.PI / (6 * 60));
+    const minuteAngle = this.minute * Math.PI / 30;
+    this.drawHand(hourAngle, this.radius * 0.5, this.radius * 0.07, 'hour');
     this.drawHand(minuteAngle, this.radius * 0.8, this.radius * 0.07, 'minute');
   }
 
   drawHand(pos, length, width, type) {
-    let ctx = this.ctx;
+    const ctx = this.ctx;
     ctx.beginPath();
     ctx.lineWidth = width;
     ctx.lineCap = "round";
@@ -85,46 +82,49 @@ export class AnalogueClock {
     ctx.rotate(-pos);
   }
 
-  angleFromCoords(x, y) {
-    let angle = Math.atan2(y, x);
-    if (angle < 0) angle += 2 * Math.PI;
-    return angle;
+  getHandTipCoords(angle, length) {
+    return {
+      x: Math.cos(angle) * -length,
+      y: Math.sin(angle) * -length
+    };
+  }
+
+  getMousePos(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    return {
+      x: e.clientX - rect.left - this.canvas.width / 2,
+      y: e.clientY - rect.top - this.canvas.height / 2
+    };
   }
 
   onMouseDown(e) {
-    const rect = this.canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left - this.canvas.width / 2;
-    const y = e.clientY - rect.top - this.canvas.height / 2;
-    const angle = this.angleFromCoords(x, y);
-
+    const mouse = this.getMousePos(e);
+    const hourAngle = ((this.hour % 12) * Math.PI / 6) + (this.minute * Math.PI / (6 * 60));
     const minuteAngle = this.minute * Math.PI / 30;
-    const hourAngle = (this.hour % 12) * Math.PI / 6 + (this.minute * Math.PI / (6 * 60));
+    const hourTip = this.getHandTipCoords(hourAngle, this.radius * 0.5);
+    const minuteTip = this.getHandTipCoords(minuteAngle, this.radius * 0.8);
 
-    const diffMin = Math.abs(angle - minuteAngle);
-    const diffHour = Math.abs(angle - hourAngle);
+    const distToHour = Math.hypot(mouse.x - hourTip.x, mouse.y - hourTip.y);
+    const distToMinute = Math.hypot(mouse.x - minuteTip.x, mouse.y - minuteTip.y);
 
-    if (diffMin < 0.4) {
+    if (distToMinute < 25) {
       this.dragging = 'minute';
-    } else if (diffHour < 0.4) {
+    } else if (distToHour < 25) {
       this.dragging = 'hour';
     }
   }
 
   onMouseMove(e) {
     if (!this.dragging) return;
-
-    const rect = this.canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left - this.canvas.width / 2;
-    const y = e.clientY - rect.top - this.canvas.height / 2;
-    const angle = this.angleFromCoords(x, y);
-
+    const mouse = this.getMousePos(e);
+    const angle = Math.atan2(mouse.y, mouse.x);
     if (this.dragging === 'minute') {
       this.minute = Math.round((angle * 30) / Math.PI) % 60;
     } else if (this.dragging === 'hour') {
-      const rawHour = (angle * 6) / Math.PI;
-      this.hour = Math.floor(rawHour / 5);
+      let rawHour = (angle * 6) / Math.PI;
+      rawHour = rawHour < 0 ? rawHour + 72 : rawHour;
+      this.hour = Math.floor(rawHour / 6);
     }
-
     this.drawClock();
   }
 
