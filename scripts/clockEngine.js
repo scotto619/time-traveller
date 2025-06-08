@@ -82,13 +82,6 @@ export class AnalogueClock {
     ctx.rotate(-pos);
   }
 
-  getHandTipCoords(angle, length) {
-    return {
-      x: Math.cos(angle) * -length,
-      y: Math.sin(angle) * -length
-    };
-  }
-
   getMousePos(e) {
     const rect = this.canvas.getBoundingClientRect();
     return {
@@ -97,19 +90,56 @@ export class AnalogueClock {
     };
   }
 
+  pointLineDistance(px, py, x1, y1, x2, y2) {
+    const A = px - x1;
+    const B = py - y1;
+    const C = x2 - x1;
+    const D = y2 - y1;
+
+    const dot = A * C + B * D;
+    const len_sq = C * C + D * D;
+    const param = len_sq !== 0 ? dot / len_sq : -1;
+
+    let xx, yy;
+
+    if (param < 0) {
+      xx = x1;
+      yy = y1;
+    } else if (param > 1) {
+      xx = x2;
+      yy = y2;
+    } else {
+      xx = x1 + param * C;
+      yy = y1 + param * D;
+    }
+
+    const dx = px - xx;
+    const dy = py - yy;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
   onMouseDown(e) {
     const mouse = this.getMousePos(e);
     const hourAngle = ((this.hour % 12) * Math.PI / 6) + (this.minute * Math.PI / (6 * 60));
     const minuteAngle = this.minute * Math.PI / 30;
-    const hourTip = this.getHandTipCoords(hourAngle, this.radius * 0.5);
-    const minuteTip = this.getHandTipCoords(minuteAngle, this.radius * 0.8);
 
-    const distToHour = Math.hypot(mouse.x - hourTip.x, mouse.y - hourTip.y);
-    const distToMinute = Math.hypot(mouse.x - minuteTip.x, mouse.y - minuteTip.y);
+    const hourTip = {
+      x: Math.sin(hourAngle) * -this.radius * 0.5,
+      y: Math.cos(hourAngle) * -this.radius * 0.5
+    };
 
-    if (distToMinute < 25) {
+    const minuteTip = {
+      x: Math.sin(minuteAngle) * -this.radius * 0.8,
+      y: Math.cos(minuteAngle) * -this.radius * 0.8
+    };
+
+    const dragThreshold = 15;
+    const distToMinute = this.pointLineDistance(mouse.x, mouse.y, 0, 0, minuteTip.x, minuteTip.y);
+    const distToHour = this.pointLineDistance(mouse.x, mouse.y, 0, 0, hourTip.x, hourTip.y);
+
+    if (distToMinute < dragThreshold) {
       this.dragging = 'minute';
-    } else if (distToHour < 25) {
+    } else if (distToHour < dragThreshold) {
       this.dragging = 'hour';
     }
   }
@@ -117,7 +147,7 @@ export class AnalogueClock {
   onMouseMove(e) {
     if (!this.dragging) return;
     const mouse = this.getMousePos(e);
-    const angle = Math.atan2(mouse.y, mouse.x);
+    const angle = Math.atan2(mouse.x, -mouse.y);
     if (this.dragging === 'minute') {
       this.minute = Math.round((angle * 30) / Math.PI) % 60;
     } else if (this.dragging === 'hour') {
