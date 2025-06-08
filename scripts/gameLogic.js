@@ -1,4 +1,4 @@
-import { AnalogueClock } from './scripts/clockEngine.js';
+import { AnalogueClock } from './clockEngine.js';
 
 let currentClock;
 let targetHour = 0;
