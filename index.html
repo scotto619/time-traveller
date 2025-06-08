@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Time Traveller</title>
   <link rel="stylesheet" href="styles/main.css" />
+  <link rel="manifest" href="manifest.json">
 </head>
 <body>
   <div id="app">
@@ -24,10 +25,14 @@
     </div>
   </div>
 
-  <!-- Load modules -->
   <script type="module">
     import './scripts/uiHandler.js';
     import './scripts/gameLogic.js';
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js');
+    }
   </script>
 </body>
 </html>
